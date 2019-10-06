@@ -1,0 +1,29 @@
+PODS:
+  - Alamofire (4.9.0)
+  - TimePicker (0.0.5)
+
+DEPENDENCIES:
+  - Alamofire (from `https://github.com/Alamofire/Alamofire.git`, branch `hotfix`)
+  - TimePicker
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - TimePicker
+
+EXTERNAL SOURCES:
+  Alamofire:
+    :branch: hotfix
+    :git: https://github.com/Alamofire/Alamofire.git
+
+CHECKOUT OPTIONS:
+  Alamofire:
+    :commit: ce5be6fbc6f51414c49f56fc8e2b7c99253d9f8e
+    :git: https://github.com/Alamofire/Alamofire.git
+
+SPEC CHECKSUMS:
+  Alamofire: 7047cd34c1ed71a0c99126276158cb32bb7af476
+  TimePicker: aecaba534b52aa87d8ec6c62816bf2e6e56167fa
+
+PODFILE CHECKSUM: 07a3bf54ac40c9a1430d1b80fd0dac66b3af834e
+
+COCOAPODS: 1.7.0

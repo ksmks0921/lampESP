@@ -1,0 +1,3 @@
+${PODS_ROOT}/Target Support Files/Pods-myEsp/Pods-myEsp-frameworks.sh
+${BUILT_PRODUCTS_DIR}/Alamofire/Alamofire.framework
+${BUILT_PRODUCTS_DIR}/TimePicker/TimePicker.framework

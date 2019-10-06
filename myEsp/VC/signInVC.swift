@@ -9,7 +9,8 @@
 import UIKit
 
 class signInVC: UIViewController {
-
+    @IBOutlet weak var loginbtn: UIButton!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -17,6 +18,12 @@ class signInVC: UIViewController {
     }
     
 
+    @IBAction func logIn(_ sender: Any) {
+        
+        let controller = self.storyboard?.instantiateViewController(withIdentifier: "homeVC") as! homeVC
+        //            controller.webVIewUrl = url
+        self.navigationController?.pushViewController(controller, animated: true)
+    }
     /*
     // MARK: - Navigation
 

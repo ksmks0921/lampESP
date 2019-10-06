@@ -10,6 +10,7 @@ import UIKit
 
 class signUpVC: UIViewController {
 
+    @IBOutlet weak var finishbtn: UIButton!
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -17,6 +18,11 @@ class signUpVC: UIViewController {
     }
     
 
+    @IBAction func finish(_ sender: Any) {
+        let controller = self.storyboard?.instantiateViewController(withIdentifier: "verifyPhoneVC") as! verifyPhoneVC
+        //            controller.webVIewUrl = url
+        self.navigationController?.pushViewController(controller, animated: true)
+    }
     /*
     // MARK: - Navigation
 
