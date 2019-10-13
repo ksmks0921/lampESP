@@ -12,6 +12,10 @@ protocol SlideMenuDelegate {
 }
 class MenuViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
+    var sections = [
+        "Personal Information", "Pairing", "About", "Contact US"
+    ]
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return 5
         
@@ -19,6 +23,7 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MenuTableViewCell") as! MenuTableViewCell
+//        cell.textLabel?.text = sections[indexPath]
         return cell
     }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -26,7 +31,6 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
         //            controller.webVIewUrl = url
         self.navigationController?.pushViewController(controller, animated: true)
     }
-    
     
     @IBOutlet weak var btnCloseMenuOverlay: UIButton!
     

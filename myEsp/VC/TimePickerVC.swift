@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Alamofire
 
 class TimePickerVC: UIViewController {
 
@@ -17,6 +18,7 @@ class TimePickerVC: UIViewController {
     var hour: Int!
     var minute: Int!
     
+    private let networkingClient = NetworkingClient()
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -35,25 +37,79 @@ class TimePickerVC: UIViewController {
     }
     
     @IBAction func save(_ sender: Any) {
-        let controller = self.storyboard?.instantiateViewController(withIdentifier: "ControlDeviceVC") as! ControlDeviceVC
-        //            controller.webVIewUrl = url
-        controller.selecthour = String(self.hour)
-        controller.selectminute = String(self.minute)
-        controller.data_flag = true
+        
+        guard let urlToExcute = URL(string: "http://192.168.0.197/update?hour=" + makehour2(param: String(self.hour)) + "&minute=" + makehour2(param: String(self.minute))) else { return }
+        networkingClient.execute(urlToExcute) {  (json, error) in
+            if error != nil {
+                let alert = UIAlertController(title: "Alert", message: "Please make sure your device is online!", preferredStyle: .alert)
+                
+                alert.addAction(UIAlertAction(title: "OK!", style: .default, handler: nil))
+                //                                alert.addAction(UIAlertAction(title: "No", style: .cancel, handler: nil))
+                
+                self.present(alert, animated: true)
+            } else if let json = json {
+                let parseData = json
+                
+                for obj in parseData {
+                    
+                    for (key, value) in obj {
+                        
+                        if (key == "status") {
+                            if(value as? String == "updated"){
+                                
+                                let controller = self.storyboard?.instantiateViewController(withIdentifier: "ControlDeviceVC") as! ControlDeviceVC
+                                //            controller.webVIewUrl = url
+                                controller.selecthour = self.hour
+                                controller.selectminute = self.minute
+                                
+                                self.navigationController?.pushViewController(controller, animated: true)
+                                
+                            }
+                  
+                        }
+                        
+                    }
+                }
+                
+            }
+            
+        }
+    
+        
+        
 
-        self.navigationController?.pushViewController(controller, animated: true)
         
         
     }
     @IBAction func onChangeTime(_ sender: UIDatePicker, forEvent event: UIEvent) {
         
-            selecttime?.text = "hour: \(sender.date.getDayMonthYearHourMnuteSecond().hour), min: \(sender.date.getDayMonthYearHourMnuteSecond().minute)"
-            
-            self.hour = sender.date.getDayMonthYearHourMnuteSecond().hour
-            self.minute = sender.date.getDayMonthYearHourMnuteSecond().minute
+//            selecttime?.text = "hour: \(sender.date.getDayMonthYearHourMnuteSecond().hour), min: \(sender.date.getDayMonthYearHourMnuteSecond().minute)"
+        
+//        self.hour = makehour2(param: String(sender.date.getDayMonthYearHourMnuteSecond().hour))
+//        self.minute = makehour2(param: String(sender.date.getDayMonthYearHourMnuteSecond().minute))
+        
+        self.hour = sender.date.getDayMonthYearHourMnuteSecond().hour
+        self.minute = sender.date.getDayMonthYearHourMnuteSecond().minute
+    
+        selecttime?.text = "hour:" + makehour2(param: String(self.hour)) + " min:" + makehour2(param: String(self.minute))
         
     }
     
+    func makehour2(param:String) ->String{
+        
+        let hour_return:String!
+        
+        if(param.count == 1){
+            hour_return = "0"+param
+        }
+        else {
+            hour_return = param
+        }
+        return hour_return
+    }
+
+
+
  
     /*
     // MARK: - Navigation

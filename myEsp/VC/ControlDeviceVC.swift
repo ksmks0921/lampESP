@@ -17,26 +17,58 @@ class ControlDeviceVC: BaseViewController {
     @IBOutlet weak var timebtn: UIButton!
     @IBOutlet weak var current_time: UILabel!
     @IBOutlet weak var selectTime: UILabel!
+    @IBOutlet weak var autobtn: UIButton!
     
     var status: String?
     var statuscode: String?
     var onoff: Bool?
-    
-    var selecthour: String!
-    var selectminute: String!
-    var data_flag:Bool?
+    var time_value:String?
+    var selecthour: Int!
+    var selectminute: Int!
+    var auto_onoff:String!
     
     private let networkingClient = NetworkingClient()
     override func viewDidLoad() {
         
         super.viewDidLoad()
+       
+        
+        getStatus()
+        getAutoStatus()
+        initui()
+   
+        Timer.scheduledTimer(timeInterval: 0.1, target:self, selector: Selector(("updateTime")), userInfo:nil, repeats:true)
+        Timer.scheduledTimer(timeInterval: 1, target:self, selector: Selector(("startAuto")), userInfo:nil, repeats:true)
+        
+        
+        let timepicker = UITapGestureRecognizer(target: self, action: #selector(alertTimePicker(gesture:)))
+        selectTime.isUserInteractionEnabled = true
+        selectTime.addGestureRecognizer(timepicker)
+        
+        
+//        NotificationCenter.default.addObserver(self, selector: <#T##Selector#>, name: <#T##NSNotification.Name?#>, object: <#T##Any?#>)
+        // Do any additional setup after loading the view.
+    }
+    
+    func initui() {
+        
         addSlideMenuButton()
         
-        manualbtn.backgroundColor = .clear
+        let colorBtn = UIColor(red: 38.0/255.0, green: 229.0/255.0, blue: 122.0/255.0, alpha: 1)
+        let colorWhite = UIColor(red: 38, green: 229, blue: 122, alpha: 1)
+//        if(self.auto_onoff == true){
+//             manualbtn.backgroundColor = colorBtn
+//        }
+//        else {
+//            manualbtn.backgroundColor = colorWhite
+//        }
+        manualbtn.backgroundColor = colorWhite
+       
+        
         manualbtn.layer.borderColor = UIColor.black.cgColor
         manualbtn.layer.borderWidth = 1
         
-        timebtn.backgroundColor = .clear
+        timebtn.backgroundColor = colorWhite
         timebtn.layer.borderColor = UIColor.black.cgColor
         timebtn.layer.borderWidth = 1
         onoff = true // at first the lamp is turned off status
@@ -48,52 +80,112 @@ class ControlDeviceVC: BaseViewController {
         selectTime.backgroundColor = .clear
         selectTime.layer.borderColor = UIColor.black.cgColor
         selectTime.layer.borderWidth = 1
-        
-        if(data_flag == true)
-        {
-            selectTime.text = self.selecthour + ":" + self.selectminute
+     
+    }
+    func getStatus(){
+       
+        let urlToExcute = URL(string: "http://192.168.0.197/time")
+        networkingClient.execute(urlToExcute!) {  (json, error) in
+            if error != nil {
+                self.selectTime.text = "No connection to server!"
+            } else if let json = json {
+                let parseData = json
+                
+                for obj in parseData {
+                    
+                    for (key, value) in obj {
+                        
+                        if (key == "value") {
+                            
+                            self.selectTime.text = value as? String
+                            
+                        }
+                        
+                    }
+                }
+                
+            }
+            
         }
-        else {
-            selectTime.text = "Select Time"
+        
+        
+    }
+    func getAutoStatus(){
+        let urlToExcute = URL(string: "http://192.168.0.197/getauto")
+        networkingClient.execute(urlToExcute!) {  (json, error) in
+            if error != nil {
+                self.autobtn.setTitle("No connection to server!",for: .normal)
+            } else if let json = json {
+                let parseData = json
+                
+                for obj in parseData {
+                    
+                    for (key, value) in obj {
+                        
+                        if (key == "value") {
+                            
+                            self.auto_onoff = (value as! String)
+                 
+
+                                if (self.auto_onoff! == "start"){
+                                    print(self.auto_onoff!)
+                                    self.timebtn.setTitle("Pause", for: .normal)
+                                    self.manualbtn.isEnabled = false
+                                }
+                                else if (self.auto_onoff! == "stop"){
+                                    self.timebtn.setTitle("Start",for: .normal)
+                                    self.manualbtn.isEnabled = true
+                                }
+                                else {
+                                    self.timebtn.setTitle("No Data!",for: .normal)
+                                }
+
+                            
+                        }
+                        
+                    }
+                }
+                
+            }
+            
         }
-        
-        Timer.scheduledTimer(timeInterval: 0.1, target:self, selector: Selector(("updateTime")), userInfo:nil, repeats:true)
-        
-        Timer.scheduledTimer(timeInterval: 1, target:self, selector: Selector(("startAuto")), userInfo:nil, repeats:true)
-        
-        
-        let timepicker = UITapGestureRecognizer(target: self, action: #selector(alertTimePicker(gesture:)))
-        selectTime.isUserInteractionEnabled = true
-        selectTime.addGestureRecognizer(timepicker)
-        
-        
-        
-        // Do any additional setup after loading the view.
     }
     @objc func updateTime(){
         
         current_time.text = DateFormatter.localizedString(from: NSDate() as Date,dateStyle: DateFormatter.Style.none,timeStyle: DateFormatter.Style.full)
  
     }
+  
     @objc func startAuto(){
-        
+
         let date = Date()
         let calender = Calendar.current
         let hour = String(calender.component(.hour, from: date))
         let minute = String(calender.component(.minute, from: date))
         let second = String(calender.component(.second, from: date))
-        if(self.selecthour != nil){
-            if(self.selecthour == hour){
-                if(self.selectminute == minute){
-                    if(second == "0"){
-                        autoTurnOn()
+        
+        if (self.auto_onoff == "start"){
+            
+            if(self.selecthour != nil){
+                if(String(self.selecthour) == hour){
+                    if(String(self.selectminute) == minute){
+                        if(second == "0"){
+                            
+                            autoTurnOn()
+                        }
+                        
                     }
                     
                 }
                 
             }
+            
+            
         }
- 
+        
+        
+        
+
     }
     
     @objc func alertTimePicker(gesture: UIGestureRecognizer) {
@@ -106,43 +198,42 @@ class ControlDeviceVC: BaseViewController {
         
     }
 
-    func sendNotification(flag:Bool){
-        let center = UNUserNotificationCenter.current()
-        center.requestAuthorization(options: [.alert, .sound]) { (granted, error) in
-            //
-        }
-        let content = UNMutableNotificationContent()
-        content.title = "Hey! I am a notification."
-        content.body = "Look at me!"
-        
-        let date = Date()
-        let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
-        let uuidString = UUID().uuidString
-        let request = UNNotificationRequest(identifier: uuidString, content: content, trigger: trigger)
-        center.add(request) { (error) in
-            //
-        }
-//        let request = UNNotificationRequest(identifier: uuidString, content: content, trigger: )
-        if (flag == true){
-            
-        }
-        else{
-            
-        }
-    }
+//    func sendNotification(flag:Bool){
+//        let center = UNUserNotificationCenter.current()
+//        center.requestAuthorization(options: [.alert, .sound]) { (granted, error) in
+//            //
+//        }
+//        let content = UNMutableNotificationContent()
+//        content.title = "Hey! I am a notification."
+//        content.body = "Look at me!"
+//
+//        let date = Date()
+//        let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+//        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+//        let uuidString = UUID().uuidString
+//        let request = UNNotificationRequest(identifier: uuidString, content: content, trigger: trigger)
+//        center.add(request) { (error) in
+//            //
+//        }
+////        let request = UNNotificationRequest(identifier: uuidString, content: content, trigger: )
+//        if (flag == true){
+//
+//        }
+//        else{
+//
+//        }
+//    }
     func autoTurnOn(){
-        if (onoff == true)
-        {
-            self.statuscode = "1"
-        }
-        else{
-            self.statuscode = "0"
-        }
-        guard let urlToExcute = URL(string: "https://cloud.arest.io/ksmks0921/digital/4/"+self.statuscode! ) else { return }
+        
+        guard let urlToExcute = URL(string: "http://192.168.0.197/ledOn") else { return }
         networkingClient.execute(urlToExcute) {  (json, error) in
             if error != nil {
+                let alert = UIAlertController(title: "Alert", message: "Please make sure your device is online!", preferredStyle: .alert)
                 
+                alert.addAction(UIAlertAction(title: "OK!", style: .default, handler: nil))
+                //                                alert.addAction(UIAlertAction(title: "No", style: .cancel, handler: nil))
+                
+                self.present(alert, animated: true)
             } else if let json = json {
                 let parseData = json
                 
@@ -150,32 +241,14 @@ class ControlDeviceVC: BaseViewController {
                     
                     for (key, value) in obj {
                         
-                        if (key == "connected") {
-                            if(value as? Bool == true){
-                                self.status = value as? String;
+                        if (key == "status") {
+                         
+                            if(value as? String == "on"){
+                                self.onoff = false
+                                self.manualbtn.setTitle("OFF",for: .normal)
                                 
-                                if (self.onoff == true)
-                                {
-                                    self.sendNotification(flag:true)
-                                    self.onoff = false
-                                    self.manualbtn.setTitle("OFF",for: .normal)
-                                    
-                                }
-                                else{
-                                    self.sendNotification(flag:false)
-                                    self.onoff = true
-                                    self.manualbtn.setTitle("ON",for: .normal)
-                                }
                             }
-                            else{
-                                let alert = UIAlertController(title: "Alert", message: "Please make sure your device is online!", preferredStyle: .alert)
-                                
-                                alert.addAction(UIAlertAction(title: "OK!", style: .default, handler: nil))
-                                //                                alert.addAction(UIAlertAction(title: "No", style: .cancel, handler: nil))
-                                
-                                self.present(alert, animated: true)
-                            }
-                            
+    
                         }
                     }
                     
@@ -188,15 +261,20 @@ class ControlDeviceVC: BaseViewController {
     @IBAction func startManual(_ sender: Any) {
         if (onoff == true)
         {
-            self.statuscode = "1"
+            self.statuscode = "ledOn"
         }
         else{
-            self.statuscode = "0"
+            self.statuscode = "ledOff"
         }
-        guard let urlToExcute = URL(string: "https://cloud.arest.io/ksmks0921/digital/4/"+self.statuscode! ) else { return }
+        guard let urlToExcute = URL(string: "http://192.168.0.197/"+self.statuscode! ) else { return }
         networkingClient.execute(urlToExcute) {  (json, error) in
             if error != nil {
+                let alert = UIAlertController(title: "Alert", message: "Please make sure your device is online!", preferredStyle: .alert)
                 
+                alert.addAction(UIAlertAction(title: "OK!", style: .default, handler: nil))
+                //                                alert.addAction(UIAlertAction(title: "No", style: .cancel, handler: nil))
+                
+                self.present(alert, animated: true)
             } else if let json = json {
                 let parseData = json
                 
@@ -204,26 +282,19 @@ class ControlDeviceVC: BaseViewController {
                     
                     for (key, value) in obj {
                         
-                        if (key == "connected") {
-                            if(value as? Bool == true){
-                                self.status = value as? String;
-                                if (self.onoff == true)
-                                {
-                                    self.onoff = false
-                                    self.manualbtn.setTitle("OFF",for: .normal)
-                                }
-                                else{
-                                    self.onoff = true
-                                    self.manualbtn.setTitle("ON",for: .normal)
-                                }
+                        if (key == "status") {
+                            print(value)
+                            if(value as? String == "on"){
+ 
+                                self.onoff = false
+                                self.manualbtn.setTitle("OFF",for: .normal)
+                               
+                              
                             }
                             else{
-                                let alert = UIAlertController(title: "Alert", message: "Please make sure your device is online!", preferredStyle: .alert)
-                                
-                                alert.addAction(UIAlertAction(title: "OK!", style: .default, handler: nil))
-//                                alert.addAction(UIAlertAction(title: "No", style: .cancel, handler: nil))
-                                
-                                self.present(alert, animated: true)
+                                self.onoff = true
+                                self.manualbtn.setTitle("ON",for: .normal)
+                        
                             }
                             
                         }
@@ -237,8 +308,48 @@ class ControlDeviceVC: BaseViewController {
     }
     
     @IBAction func startwithTime(_ sender: Any) {
+     
+        guard let urlToExcute = URL(string: "http://192.168.0.197/auto?status=" + String(self.auto_onoff)) else { return }
+        networkingClient.execute(urlToExcute) {  (json, error) in
+            if error != nil {
+                let alert = UIAlertController(title: "Alert", message: "Please make sure your device is online!", preferredStyle: .alert)
+                
+                alert.addAction(UIAlertAction(title: "OK!", style: .default, handler: nil))
+                //                                alert.addAction(UIAlertAction(title: "No", style: .cancel, handler: nil))
+                
+                self.present(alert, animated: true)
+            } else if let json = json {
+                let parseData = json
+                
+                for obj in parseData {
+                    
+                    for (key, value) in obj {
+                        
+                        if (key == "status") {
+                            if(value as? String == "start"){
+                                self.timebtn.setTitle("Pause",for: .normal)
+                                self.auto_onoff = "stop"
+                                self.manualbtn.isEnabled = false
+                                
+                                
+                            }
+                            else{
+                                self.timebtn.setTitle("Start",for: .normal)
+                                self.auto_onoff = "start"
+                                self.manualbtn.isEnabled = true
+                            }
+                            
+                        }
+                        
+                    }
+                }
+                
+            }
+            
+        }
         
     }
+    
     
     
     /*
